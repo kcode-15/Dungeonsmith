@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Dungeonsmith"
+description = "Play D&D online in shared campaign rooms. DMs build maps; players join by code and character name to chat without creating an account."
+version = "1.0.0"
+id = "artifacts/tabletop-rooms"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24028
+
+[services.development]
+run = "pnpm --filter @workspace/tabletop-rooms run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tabletop-rooms", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tabletop-rooms/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24028"
+BASE_PATH = "/"

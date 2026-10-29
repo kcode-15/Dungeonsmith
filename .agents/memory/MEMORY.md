@@ -1,0 +1,1 @@
+- [Clerk SDK compatibility](clerk-sdk-compatibility.md) — keep Clerk React and shared packages on compatible major generations and satisfy the installed SDK's React peer range.

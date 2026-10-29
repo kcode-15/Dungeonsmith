@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: tabletop
+    description: Rooms, maps, players, and chat
 paths:
   /healthz:
     get:
@@ -24,6 +26,174 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dm/rooms:
+    get:
+      operationId: listDmRooms
+      tags: [tabletop]
+      summary: List the signed-in DM's rooms
+      responses:
+        "200":
+          description: Rooms owned by the signed-in DM
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoomSummary"
+        "401":
+          description: Authentication required
+    post:
+      operationId: createRoom
+      tags: [tabletop]
+      summary: Create a room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomInput"
+      responses:
+        "201":
+          description: The new room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomSummary"
+        "400":
+          description: Invalid room details
+        "401":
+          description: Authentication required
+  /rooms/{code}:
+    get:
+      operationId: getRoomByCode
+      tags: [tabletop]
+      summary: Get a room by its join code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The room and its current map and players
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomState"
+        "404":
+          description: Room not found
+  /rooms/{code}/join:
+    post:
+      operationId: joinRoom
+      tags: [tabletop]
+      summary: Join a room with a character name
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRoomInput"
+      responses:
+        "201":
+          description: The joined player
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "400":
+          description: Invalid character name
+        "404":
+          description: Room not found
+  /rooms/{code}/map:
+    put:
+      operationId: updateRoomMap
+      tags: [tabletop]
+      summary: Save the room map
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MapInput"
+      responses:
+        "200":
+          description: The saved map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapData"
+        "401":
+          description: Authentication required
+        "403":
+          description: Only the room DM can edit its map
+        "404":
+          description: Room not found
+  /rooms/{code}/messages:
+    get:
+      operationId: listRoomMessages
+      tags: [tabletop]
+      summary: List room chat messages
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The latest chat messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+        "401":
+          description: Join the room to view chat
+        "404":
+          description: Room not found
+    post:
+      operationId: sendRoomMessage
+      tags: [tabletop]
+      summary: Send a chat message
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "201":
+          description: The new chat message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          description: Invalid message
+        "401":
+          description: Join the room to chat
+        "404":
+          description: Room not found
 components:
   schemas:
     HealthStatus:
@@ -33,4 +203,111 @@ components:
           type: string
       required:
         - status
+    Terrain:
+      type: string
+      enum: [grass, stone, water, forest, sand, lava, wall]
+    MapData:
+      type: object
+      properties:
+        width:
+          type: integer
+          minimum: 8
+          maximum: 32
+        height:
+          type: integer
+          minimum: 8
+          maximum: 24
+        tiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Terrain"
+      required: [width, height, tiles]
+    MapInput:
+      type: object
+      properties:
+        map:
+          $ref: "#/components/schemas/MapData"
+      required: [map]
+    RoomInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 80
+      required: [title]
+    JoinRoomInput:
+      type: object
+      properties:
+        characterName:
+          type: string
+          minLength: 1
+          maxLength: 40
+      required: [characterName]
+    ChatMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: [content]
+    Player:
+      type: object
+      properties:
+        id:
+          type: string
+        characterName:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+      required: [id, characterName, joinedAt]
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        characterName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, characterName, content, createdAt]
+    RoomSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        code:
+          type: string
+        playerCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, code, playerCount, createdAt]
+    RoomState:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        code:
+          type: string
+        map:
+          $ref: "#/components/schemas/MapData"
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/Player"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, code, map, players, createdAt]
 
