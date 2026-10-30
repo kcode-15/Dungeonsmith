@@ -1,8 +1,7 @@
-import { randomBytes, randomInt, createHash } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import { Router, type IRouter, type RequestHandler } from "express";
 import { getAuth } from "@clerk/express";
 import {
-  and,
   count,
   desc,
   eq,
@@ -32,10 +31,16 @@ import {
   roomsTable,
   type RoomMap,
 } from "@workspace/db";
+import {
+  getPlayerForRequest,
+  getRoom,
+  hashToken,
+  isRoomOwner,
+  roomCookieName,
+} from "../lib/tabletop-access";
 
 const router: IRouter = Router();
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const ROOM_COOKIE_PREFIX = "tabletop_player_";
 
 const requireAuth: RequestHandler = (req, res, next): void => {
   const userId = getAuth(req).userId;
@@ -46,14 +51,6 @@ const requireAuth: RequestHandler = (req, res, next): void => {
   res.locals.userId = userId;
   next();
 };
-
-function roomCookieName(code: string): string {
-  return `${ROOM_COOKIE_PREFIX}${code}`;
-}
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
 
 function newRoomCode(): string {
   return Array.from(
@@ -105,40 +102,6 @@ function toRoomSummary(
     playerCount,
     createdAt: room.createdAt.toISOString(),
   };
-}
-
-async function getRoom(code: string) {
-  const normalizedCode = code.toUpperCase();
-  const [room] = await db
-    .select()
-    .from(roomsTable)
-    .where(eq(roomsTable.code, normalizedCode))
-    .limit(1);
-  return room;
-}
-
-async function getPlayerForRequest(
-  req: Parameters<RequestHandler>[0],
-  roomId: string,
-  code: string,
-) {
-  const token = req.cookies?.[roomCookieName(code)];
-  if (typeof token !== "string" || token.length < 32) return undefined;
-  const [player] = await db
-    .select()
-    .from(playersTable)
-    .where(
-      and(
-        eq(playersTable.roomId, roomId),
-        eq(playersTable.sessionTokenHash, hashToken(token)),
-      ),
-    )
-    .limit(1);
-  return player;
-}
-
-async function isRoomOwner(req: Parameters<RequestHandler>[0], ownerId: string) {
-  return getAuth(req).userId === ownerId;
 }
 
 router.get("/dm/rooms", requireAuth, async (req, res): Promise<void> => {

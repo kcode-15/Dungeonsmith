@@ -20,8 +20,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AttackRequestInput,
+  AttackResult,
   ChatMessage,
   ChatMessageInput,
+  CombatActionInput,
+  CombatState,
+  CombatantInitiativeInput,
+  CombatantInput,
   HealthStatus,
   JoinRoomInput,
   MapData,
@@ -555,6 +561,517 @@ export const useUpdateRoomMap = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateRoomMapMutationOptions(options));
+    }
+
+export const getGetRoomCombatUrl = (code: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combat`
+}
+
+/**
+ * @summary Get room combat state
+ */
+export const getRoomCombat = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<CombatState> => {
+
+  return customFetch<CombatState>(getGetRoomCombatUrl(code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoomCombatQueryKey = (code: string,) => {
+    return [
+    `/api/rooms/${code}/combat`
+    ] as const;
+    }
+
+
+export const getGetRoomCombatQueryOptions = <TData = Awaited<ReturnType<typeof getRoomCombat>>, TError = ErrorType<void>>(code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomCombat>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoomCombatQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoomCombat>>> = ({ signal }) => getRoomCombat(code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoomCombat>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRoomCombatQueryResult = NonNullable<Awaited<ReturnType<typeof getRoomCombat>>>
+export type GetRoomCombatQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get room combat state
+ */
+
+export function useGetRoomCombat<TData = Awaited<ReturnType<typeof getRoomCombat>>, TError = ErrorType<void>>(
+ code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomCombat>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRoomCombatQueryOptions(code,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateRoomCombatUrl = (code: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combat`
+}
+
+/**
+ * @summary Start, advance, or end combat
+ */
+export const updateRoomCombat = async (code: string,
+    combatActionInput: CombatActionInput, options?: Parameters<typeof customFetch>[1]): Promise<CombatState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CombatState>(getUpdateRoomCombatUrl(code),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(combatActionInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateRoomCombatMutationKey = () => ['updateRoomCombat'] as const;
+
+export const getUpdateRoomCombatMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoomCombat>>, TError,UpdateRoomCombatMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRoomCombat>>, TError,UpdateRoomCombatMutationVariables, TContext> => {
+
+const mutationKey = getUpdateRoomCombatMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRoomCombat>>, UpdateRoomCombatMutationVariables> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  updateRoomCombat(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRoomCombatMutationResult = NonNullable<Awaited<ReturnType<typeof updateRoomCombat>>>
+    export type UpdateRoomCombatMutationBody = BodyType<CombatActionInput>
+    export type UpdateRoomCombatMutationError = ErrorType<void>
+    export type UpdateRoomCombatMutationVariables = {code: string;data: BodyType<CombatActionInput>}
+
+    /**
+ * @summary Start, advance, or end combat
+ */
+export const useUpdateRoomCombat = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoomCombat>>, TError,UpdateRoomCombatMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRoomCombat>>,
+        TError,
+        UpdateRoomCombatMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateRoomCombatMutationOptions(options));
+    }
+
+export const getAddCombatantUrl = (code: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combatants`
+}
+
+/**
+ * @summary Add an enemy to combat
+ */
+export const addCombatant = async (code: string,
+    combatantInput: CombatantInput, options?: Parameters<typeof customFetch>[1]): Promise<CombatState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CombatState>(getAddCombatantUrl(code),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(combatantInput)
+  }
+);}
+
+
+
+
+
+export const getAddCombatantMutationKey = () => ['addCombatant'] as const;
+
+export const getAddCombatantMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCombatant>>, TError,AddCombatantMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCombatant>>, TError,AddCombatantMutationVariables, TContext> => {
+
+const mutationKey = getAddCombatantMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCombatant>>, AddCombatantMutationVariables> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  addCombatant(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddCombatantMutationResult = NonNullable<Awaited<ReturnType<typeof addCombatant>>>
+    export type AddCombatantMutationBody = BodyType<CombatantInput>
+    export type AddCombatantMutationError = ErrorType<void>
+    export type AddCombatantMutationVariables = {code: string;data: BodyType<CombatantInput>}
+
+    /**
+ * @summary Add an enemy to combat
+ */
+export const useAddCombatant = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCombatant>>, TError,AddCombatantMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addCombatant>>,
+        TError,
+        AddCombatantMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAddCombatantMutationOptions(options));
+    }
+
+export const getUpdateCombatantInitiativeUrl = (code: string,
+    combatantId: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combatants/${combatantId}`
+}
+
+/**
+ * @summary Update a combatant's initiative
+ */
+export const updateCombatantInitiative = async (code: string,
+    combatantId: string,
+    combatantInitiativeInput: CombatantInitiativeInput, options?: Parameters<typeof customFetch>[1]): Promise<CombatState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CombatState>(getUpdateCombatantInitiativeUrl(code,combatantId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(combatantInitiativeInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateCombatantInitiativeMutationKey = () => ['updateCombatantInitiative'] as const;
+
+export const getUpdateCombatantInitiativeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCombatantInitiative>>, TError,UpdateCombatantInitiativeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCombatantInitiative>>, TError,UpdateCombatantInitiativeMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCombatantInitiativeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCombatantInitiative>>, UpdateCombatantInitiativeMutationVariables> = (props) => {
+          const {code,combatantId,data} = props ?? {};
+
+          return  updateCombatantInitiative(code,combatantId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCombatantInitiativeMutationResult = NonNullable<Awaited<ReturnType<typeof updateCombatantInitiative>>>
+    export type UpdateCombatantInitiativeMutationBody = BodyType<CombatantInitiativeInput>
+    export type UpdateCombatantInitiativeMutationError = ErrorType<void>
+    export type UpdateCombatantInitiativeMutationVariables = {code: string;combatantId: string;data: BodyType<CombatantInitiativeInput>}
+
+    /**
+ * @summary Update a combatant's initiative
+ */
+export const useUpdateCombatantInitiative = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCombatantInitiative>>, TError,UpdateCombatantInitiativeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCombatantInitiative>>,
+        TError,
+        UpdateCombatantInitiativeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCombatantInitiativeMutationOptions(options));
+    }
+
+export const getRemoveCombatantUrl = (code: string,
+    combatantId: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combatants/${combatantId}`
+}
+
+/**
+ * @summary Remove a combatant
+ */
+export const removeCombatant = async (code: string,
+    combatantId: string, options?: Parameters<typeof customFetch>[1]): Promise<CombatState> => {
+
+  return customFetch<CombatState>(getRemoveCombatantUrl(code,combatantId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveCombatantMutationKey = () => ['removeCombatant'] as const;
+
+export const getRemoveCombatantMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCombatant>>, TError,RemoveCombatantMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCombatant>>, TError,RemoveCombatantMutationVariables, TContext> => {
+
+const mutationKey = getRemoveCombatantMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCombatant>>, RemoveCombatantMutationVariables> = (props) => {
+          const {code,combatantId} = props ?? {};
+
+          return  removeCombatant(code,combatantId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCombatantMutationResult = NonNullable<Awaited<ReturnType<typeof removeCombatant>>>
+
+    export type RemoveCombatantMutationError = ErrorType<void>
+    export type RemoveCombatantMutationVariables = {code: string;combatantId: string}
+
+    /**
+ * @summary Remove a combatant
+ */
+export const useRemoveCombatant = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCombatant>>, TError,RemoveCombatantMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeCombatant>>,
+        TError,
+        RemoveCombatantMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveCombatantMutationOptions(options));
+    }
+
+export const getRequestAttackUrl = (code: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/combat/attacks`
+}
+
+/**
+ * @summary Request an attack roll on the active player's turn
+ */
+export const requestAttack = async (code: string,
+    attackRequestInput: AttackRequestInput, options?: Parameters<typeof customFetch>[1]): Promise<AttackResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AttackResult>(getRequestAttackUrl(code),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(attackRequestInput)
+  }
+);}
+
+
+
+
+
+export const getRequestAttackMutationKey = () => ['requestAttack'] as const;
+
+export const getRequestAttackMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAttack>>, TError,RequestAttackMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestAttack>>, TError,RequestAttackMutationVariables, TContext> => {
+
+const mutationKey = getRequestAttackMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestAttack>>, RequestAttackMutationVariables> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  requestAttack(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestAttackMutationResult = NonNullable<Awaited<ReturnType<typeof requestAttack>>>
+    export type RequestAttackMutationBody = BodyType<AttackRequestInput>
+    export type RequestAttackMutationError = ErrorType<void>
+    export type RequestAttackMutationVariables = {code: string;data: BodyType<AttackRequestInput>}
+
+    /**
+ * @summary Request an attack roll on the active player's turn
+ */
+export const useRequestAttack = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAttack>>, TError,RequestAttackMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestAttack>>,
+        TError,
+        RequestAttackMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestAttackMutationOptions(options));
     }
 
 export const getListRoomMessagesUrl = (code: string,) => {

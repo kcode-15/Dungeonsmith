@@ -12,12 +12,42 @@ export type RoomMap = {
   tiles: string[];
 };
 
+export type RoomCombatant = {
+  id: string;
+  playerId: string | null;
+  name: string;
+  kind: "player" | "enemy";
+  initiative: number;
+};
+
+export type RoomAttackResult = {
+  id: string;
+  actorId: string;
+  actorName: string;
+  targetName: string;
+  dexterityScore: number;
+  dexterityModifier: number;
+  d20Roll: number;
+  total: number;
+  round: number;
+  createdAt: string;
+};
+
+export type RoomCombatState = {
+  active: boolean;
+  round: number;
+  activeCombatantId: string | null;
+  combatants: RoomCombatant[];
+  attacks: RoomAttackResult[];
+};
+
 export const roomsTable = pgTable("tabletop_rooms", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   code: text("code").notNull().unique(),
   ownerId: text("owner_id").notNull(),
   map: jsonb("map").$type<RoomMap>().notNull(),
+  combatState: jsonb("combat_state").$type<RoomCombatState>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

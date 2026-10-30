@@ -6,8 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './attackRequestInput';
+export * from './attackResult';
 export * from './chatMessage';
 export * from './chatMessageInput';
+export * from './combatActionInput';
+export * from './combatActionInputAction';
+export * from './combatant';
+export * from './combatantInitiativeInput';
+export * from './combatantInput';
+export * from './combatantKind';
+export * from './combatState';
 export * from './healthStatus';
 export * from './joinRoomInput';
 export * from './mapData';

@@ -144,6 +144,230 @@ export const UpdateRoomMapResponse = zod.object({
 
 
 /**
+ * @summary Get room combat state
+ */
+export const GetRoomCombatParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const GetRoomCombatResponse = zod.object({
+  "active": zod.boolean(),
+  "round": zod.number().int(),
+  "activeCombatantId": zod.string().nullable(),
+  "combatants": zod.array(zod.object({
+  "id": zod.string(),
+  "playerId": zod.string().nullable(),
+  "name": zod.string(),
+  "kind": zod.enum(['player', 'enemy']),
+  "initiative": zod.number().int()
+})),
+  "attacks": zod.array(zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Start, advance, or end combat
+ */
+export const UpdateRoomCombatParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const UpdateRoomCombatBody = zod.object({
+  "action": zod.enum(['start', 'advance', 'end'])
+})
+
+export const UpdateRoomCombatResponse = zod.object({
+  "active": zod.boolean(),
+  "round": zod.number().int(),
+  "activeCombatantId": zod.string().nullable(),
+  "combatants": zod.array(zod.object({
+  "id": zod.string(),
+  "playerId": zod.string().nullable(),
+  "name": zod.string(),
+  "kind": zod.enum(['player', 'enemy']),
+  "initiative": zod.number().int()
+})),
+  "attacks": zod.array(zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Add an enemy to combat
+ */
+export const AddCombatantParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const addCombatantBodyNameMax = 40;
+
+export const addCombatantBodyInitiativeMin = -5;
+export const addCombatantBodyInitiativeMax = 50;
+
+
+
+export const AddCombatantBody = zod.object({
+  "name": zod.string().min(1).max(addCombatantBodyNameMax),
+  "initiative": zod.number().int().min(addCombatantBodyInitiativeMin).max(addCombatantBodyInitiativeMax)
+})
+
+export const AddCombatantResponse = zod.object({
+  "active": zod.boolean(),
+  "round": zod.number().int(),
+  "activeCombatantId": zod.string().nullable(),
+  "combatants": zod.array(zod.object({
+  "id": zod.string(),
+  "playerId": zod.string().nullable(),
+  "name": zod.string(),
+  "kind": zod.enum(['player', 'enemy']),
+  "initiative": zod.number().int()
+})),
+  "attacks": zod.array(zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Update a combatant's initiative
+ */
+export const UpdateCombatantInitiativeParams = zod.object({
+  "code": zod.coerce.string(),
+  "combatantId": zod.coerce.string()
+})
+
+export const updateCombatantInitiativeBodyInitiativeMin = -5;
+export const updateCombatantInitiativeBodyInitiativeMax = 50;
+
+
+
+export const UpdateCombatantInitiativeBody = zod.object({
+  "initiative": zod.number().int().min(updateCombatantInitiativeBodyInitiativeMin).max(updateCombatantInitiativeBodyInitiativeMax)
+})
+
+export const UpdateCombatantInitiativeResponse = zod.object({
+  "active": zod.boolean(),
+  "round": zod.number().int(),
+  "activeCombatantId": zod.string().nullable(),
+  "combatants": zod.array(zod.object({
+  "id": zod.string(),
+  "playerId": zod.string().nullable(),
+  "name": zod.string(),
+  "kind": zod.enum(['player', 'enemy']),
+  "initiative": zod.number().int()
+})),
+  "attacks": zod.array(zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Remove a combatant
+ */
+export const RemoveCombatantParams = zod.object({
+  "code": zod.coerce.string(),
+  "combatantId": zod.coerce.string()
+})
+
+export const RemoveCombatantResponse = zod.object({
+  "active": zod.boolean(),
+  "round": zod.number().int(),
+  "activeCombatantId": zod.string().nullable(),
+  "combatants": zod.array(zod.object({
+  "id": zod.string(),
+  "playerId": zod.string().nullable(),
+  "name": zod.string(),
+  "kind": zod.enum(['player', 'enemy']),
+  "initiative": zod.number().int()
+})),
+  "attacks": zod.array(zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Request an attack roll on the active player's turn
+ */
+export const RequestAttackParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const requestAttackBodyTargetNameMax = 60;
+
+export const requestAttackBodyDexterityScoreMax = 30;
+
+
+
+export const RequestAttackBody = zod.object({
+  "targetName": zod.string().min(1).max(requestAttackBodyTargetNameMax),
+  "dexterityScore": zod.number().int().min(1).max(requestAttackBodyDexterityScoreMax)
+})
+
+export const RequestAttackResponse = zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "actorName": zod.string(),
+  "targetName": zod.string(),
+  "dexterityScore": zod.number().int(),
+  "dexterityModifier": zod.number().int(),
+  "d20Roll": zod.number().int(),
+  "total": zod.number().int(),
+  "round": zod.number().int(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List room chat messages
  */
 export const ListRoomMessagesParams = zod.object({

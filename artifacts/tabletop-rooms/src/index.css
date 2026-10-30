@@ -739,6 +739,43 @@ a { color: inherit; text-decoration: none; }
 .player-online { width: 6px; height: 6px; border-radius: 50%; background: #7c9874; }
 .players-empty { display: flex; align-items: center; gap: 9px; padding: 15px 0 3px; color: #9a7858; }
 .players-empty p { margin: 0; color: #838783; font-size: 10px; }
+.combat-panel { padding: 15px; border: 1px solid #d7cebf; background: #f7f2e8; }
+.combat-panel .panel-header { margin-bottom: 12px; }
+.combat-panel .panel-header h2 .combat-round-label { display: inline-flex; width: auto; height: auto; padding: 4px 6px; border-radius: 3px; color: #805537; background: #edddc6; font-family: var(--mono); font-size: 7px; letter-spacing: .04em; }
+.combat-dm-controls, .combat-player-status { display: flex; flex-direction: column; gap: 9px; }
+.combat-current-turn { display: flex; align-items: center; gap: 7px; margin: 0; color: #596267; font-size: 10px; }
+.combat-turn-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #7c9874; }
+.combat-action-row { display: flex; gap: 6px; }
+.combat-action-button { display: inline-flex; width: 100%; min-height: 34px; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; font-size: 10px; }
+.combat-action-row .combat-action-button { flex: 1; }
+.combat-enemy-form, .combat-attack-form { display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 1px solid #e3dbce; }
+.combat-enemy-form label, .combat-attack-form label { color: #8f694a; font-family: var(--mono); font-size: 7px; letter-spacing: .1em; }
+.combat-enemy-fields { display: grid; grid-template-columns: minmax(0, 1fr) 48px 31px; gap: 5px; }
+.combat-enemy-fields input, .combat-attack-form input { min-width: 0; height: 32px; padding: 0 8px; border: 1px solid #d8d0c2; border-radius: 4px; outline: 0; color: #424c52; background: #fffaf1; font-size: 10px; }
+.combat-enemy-fields input:focus, .combat-attack-form input:focus, .initiative-input:focus { border-color: #ac805b; }
+.combat-icon-button { display: grid; width: 31px; height: 31px; place-items: center; border: 1px solid #d7cebf; border-radius: 4px; color: #805537; background: #f1e6d5; }
+.combat-icon-button:disabled { opacity: .5; }
+.combat-turn-order, .combat-attack-log { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e3dbce; }
+.combat-subheading { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; color: #8f694a; font-family: var(--mono); font-size: 7px; letter-spacing: .09em; }
+.combatant-row { display: grid; grid-template-columns: 19px minmax(0, 1fr) 42px 25px; align-items: center; gap: 5px; min-height: 35px; padding: 4px; border: 1px solid transparent; border-radius: 4px; }
+.combatant-active { border-color: #c8a67f; background: #f2e5d2; }
+.combatant-order { color: #9a8d79; font-family: var(--mono); font-size: 8px; text-align: center; }
+.combatant-name { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.combatant-name strong { overflow: hidden; color: #4c565b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.combatant-name small { color: #99958a; font-family: var(--mono); font-size: 6px; letter-spacing: .08em; }
+.initiative-input { width: 42px; height: 25px; padding: 0 3px; border: 1px solid #d8d0c2; border-radius: 3px; color: #5b6263; background: #fffaf1; font-family: var(--mono); font-size: 9px; text-align: center; }
+.combatant-initiative { color: #676f70; font-family: var(--mono); font-size: 9px; text-align: center; }
+.combat-remove-button { width: 25px; height: 25px; border-color: transparent; color: #9b6c58; background: transparent; }
+.combat-remove-button:hover { border-color: #dfc9b8; background: #f4e8dc; }
+.combat-attack-form { margin-top: 10px; }
+.combat-attack-form .combat-hint { margin: 0; }
+.combat-hint { margin: 3px 0 0; color: #858780; font-size: 9px; line-height: 1.5; }
+.combat-error { margin: 9px 0 0; font-size: 9px; }
+.combat-roll-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #687172; font-size: 8px; }
+.combat-roll-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combat-roll-row > span strong { color: #4c565b; }
+.combat-roll-row small { color: #858780; font-size: 8px; }
+.combat-roll-total { flex: 0 0 auto; color: #895536; font-family: var(--mono); font-size: 8px; }
 .room-join-inline { display: flex; flex-direction: column; padding-top: 13px; border-top: 1px solid #e3dbce; }
 .room-join-inline label { color: #8f694a; }
 .room-join-inline > div { display: flex; gap: 6px; }

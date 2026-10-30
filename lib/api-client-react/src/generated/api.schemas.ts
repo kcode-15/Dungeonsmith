@@ -40,6 +40,92 @@ export interface MapInput {
   map: MapData;
 }
 
+export type CombatantKind = typeof CombatantKind[keyof typeof CombatantKind];
+
+
+export const CombatantKind = {
+  player: 'player',
+  enemy: 'enemy',
+} as const;
+
+export interface Combatant {
+  id: string;
+  /** @nullable */
+  playerId: string | null;
+  name: string;
+  kind: CombatantKind;
+  initiative: number;
+}
+
+export interface AttackResult {
+  id: string;
+  actorId: string;
+  actorName: string;
+  targetName: string;
+  dexterityScore: number;
+  dexterityModifier: number;
+  d20Roll: number;
+  total: number;
+  round: number;
+  createdAt: string;
+}
+
+export interface CombatState {
+  active: boolean;
+  round: number;
+  /** @nullable */
+  activeCombatantId: string | null;
+  combatants: Combatant[];
+  attacks: AttackResult[];
+}
+
+export type CombatActionInputAction = typeof CombatActionInputAction[keyof typeof CombatActionInputAction];
+
+
+export const CombatActionInputAction = {
+  start: 'start',
+  advance: 'advance',
+  end: 'end',
+} as const;
+
+export interface CombatActionInput {
+  action: CombatActionInputAction;
+}
+
+export interface CombatantInput {
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  name: string;
+  /**
+     * @minimum -5
+     * @maximum 50
+     */
+  initiative: number;
+}
+
+export interface CombatantInitiativeInput {
+  /**
+     * @minimum -5
+     * @maximum 50
+     */
+  initiative: number;
+}
+
+export interface AttackRequestInput {
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  targetName: string;
+  /**
+     * @minimum 1
+     * @maximum 30
+     */
+  dexterityScore: number;
+}
+
 export interface RoomInput {
   /**
      * @minLength 1
