@@ -101,7 +101,7 @@ function HomePage() {
       </section>
 
       <section className="closing-banner"><div className="page-wrap closing-inner"><BookOpen size={24} /><p>Every great D&amp;D campaign starts<br /><em>with a place to meet.</em></p><Link href="/sign-up" className="button button-light" data-testid="link-start-campaign">Start your campaign <ArrowRight size={16} /></Link></div></section>
-      <footer className="landing-footer page-wrap"><Link href="/" className="brand-lockup"><img src="/logo.svg" alt="" className="brand-mark" /><span>Dungeon<span className="brand-light">smith</span></span></Link><span>Your online table for D&amp;D.</span><span>BUILT FOR THE TABLE</span></footer>
+      <footer className="landing-footer page-wrap"><Link href="/" className="brand-lockup"><img src="/logo.svg" alt="" className="brand-mark" /><span>Dungeon<span className="brand-light">smith</span></span></Link><span>Your online table for D&amp;D.</span><span>NOT AFFILIATED WITH DND BEYOND, OR WIZARDS OF THE COAST</span></footer>
     </main>
   );
 }
