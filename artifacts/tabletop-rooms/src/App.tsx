@@ -1,25 +1,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  ClerkProvider,
-  Show,
-  SignIn,
-  SignUp,
-  useClerk,
-} from "@clerk/react";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { ClerkProvider, Show, SignIn, SignUp, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
-import {
-  Route,
-  Switch,
-  Redirect,
-  useLocation,
-  Router as WouterRouter,
-} from "wouter";
-
+import { Route, Switch, Redirect, useLocation, Router as WouterRouter } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,10 +12,7 @@ import RoomPage from "@/pages/room";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
-
-const clerkPubKey =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
-
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function stripBase(path: string) {
@@ -69,8 +49,7 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox:
-      "bg-[#f6f1e6] rounded-2xl w-[440px] max-w-full overflow-hidden shadow-xl",
+    cardBox: "bg-[#f6f1e6] rounded-2xl w-[440px] max-w-full overflow-hidden shadow-xl",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-[#29313a] font-serif",
@@ -83,8 +62,15 @@ const clerkAppearance = {
     identityPreviewEditButton: "text-[#a45f37]",
     formFieldSuccessText: "text-[#40765e]",
     alertText: "text-[#29313a]",
-    otpCodeFieldInput:
-      "border-[#d6cdbd] bg-[#fbf8f1] text-[#29313a]",
+    logoBox: "mb-2",
+    logoImage: "max-h-10",
+    socialButtonsBlockButton: "border-[#d6cdbd] bg-[#fbf8f1]",
+    formButtonPrimary: "bg-[#a45f37] text-[#fbf8f1]",
+    formFieldInput: "border-[#d6cdbd] bg-[#fbf8f1] text-[#29313a]",
+    footerAction: "text-[#6b7379]",
+    dividerLine: "bg-[#d6cdbd]",
+    alert: "border-[#d6cdbd]",
+    otpCodeFieldInput: "border-[#d6cdbd] bg-[#fbf8f1] text-[#29313a]",
     formFieldRow: "text-[#29313a]",
     main: "text-[#29313a]",
   },
@@ -122,10 +108,7 @@ function SignInPage() {
       <div className="auth-intro">
         <div className="auth-brand-lockup">
           <img src={`${basePath}/logo.svg`} alt="" />
-          <span>
-            Dungeon
-            <span className="brand-light">smith</span>
-          </span>
+          <span>Dungeon<span className="brand-light">smith</span></span>
         </div>
       </div>
       <SignIn
@@ -143,10 +126,7 @@ function SignUpPage() {
       <div className="auth-intro">
         <div className="auth-brand-lockup">
           <img src={`${basePath}/logo.svg`} alt="" />
-          <span>
-            Dungeon
-            <span className="brand-light">smith</span>
-          </span>
+          <span>Dungeon<span className="brand-light">smith</span></span>
         </div>
       </div>
       <SignUp
@@ -210,21 +190,17 @@ function ClerkRoutes() {
         signIn: {
           start: {
             title: "Welcome back, storyteller",
-            subtitle:
-              "Sign in to manage your D&D campaign rooms.",
+            subtitle: "Sign in to manage your D&D campaign rooms.",
           },
         },
         signUp: {
           start: {
             title: "Make a little room",
-            subtitle:
-              "Create a DM account to host online D&D campaigns.",
+            subtitle: "Create a DM account to host online D&D campaigns.",
           },
         },
       }}
-      routerPush={(to: string) =>
-        setLocation(stripBase(to))
-      }
+      routerPush={(to: string) => setLocation(stripBase(to))}
       routerReplace={(to: string) =>
         setLocation(stripBase(to), { replace: true })
       }
@@ -235,14 +211,8 @@ function ClerkRoutes() {
           <RoutedErrorBoundary>
             <Switch>
               <Route path="/" component={HomeRedirect} />
-              <Route
-                path="/sign-in/*?"
-                component={SignInPage}
-              />
-              <Route
-                path="/sign-up/*?"
-                component={SignUpPage}
-              />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
               <Route path="/dashboard">
                 <ProtectedDashboard />
               </Route>
