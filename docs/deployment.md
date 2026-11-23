@@ -1,81 +1,60 @@
 # Deployment
 
-Dungeonsmith is deployed as two services:
+Dungeonsmith uses three separate services with distinct roles:
 
-- GitHub Pages serves the static React frontend.
-- Render runs the Express API.
-- Enzonic PostgreSQL stores rooms, players, map state, and chat.
+- **GitHub Pages** hosts the static React/Vite frontend.
+- **Render** hosts and runs the Express API. Render is the application/API host; it is not hosted on Enzonic.
+- **Enzonic** hosts only the PostgreSQL database. The API running on Render connects to that database over TLS.
 
-## Backend secrets
+The API and database connection remain server-side. Never put the database connection string or Clerk secret key in frontend code, GitHub Pages settings, or any `VITE_*` variable.
 
-Configure these values only in Render's Environment settings:
+## 1. Deploy the Express API on Render
 
-- `DATABASE_URL`: Enzonic pooler URL, including `sslmode=require`.
-- `CLERK_SECRET_KEY`: Clerk secret key.
-- `CLERK_PUBLISHABLE_KEY`: matching Clerk publishable key.
-- `CORS_ORIGINS`: exact frontend HTTPS origins, separated by commas.
+Create a Render Web Service using this repository. Configure it to build from the repository root, because the API depends on shared pnpm workspace packages.
 
-Example:
+- Runtime: Node.js
+- Node version: 24
+- Build command: `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server build`
+- Start command: `pnpm --filter @workspace/api-server start`
+- Health check path: `/api/healthz`
 
-```text
-CORS_ORIGINS=https://kcode-15.github.io
-```
+The `render.yaml` file in the repository contains this service configuration. Select the branch you are deploying from when connecting the repository to Render.
 
-Never add `DATABASE_URL` or `CLERK_SECRET_KEY` to GitHub Actions variables, GitHub repository files, or `VITE_*` variables.
+In the Render service's Environment settings, configure:
 
-## Deploy the API
+- `DATABASE_URL`: paste the Enzonic PostgreSQL **pooler** connection URL into this server-side environment secret. Retain the required `sslmode=require` parameter. Do not commit the URL or paste it into chat.
+- `CLERK_SECRET_KEY`: Clerk's secret key, stored only as a Render secret.
+- `CLERK_PUBLISHABLE_KEY`: the matching publishable key, needed by the API's Clerk middleware.
+- `CORS_ORIGINS`: comma-separated, exact frontend origins, including scheme and hostname but no path. For example, `https://kcode-15.github.io`.
 
-1. Create a Render Web Service from this repository.
-2. Select the deployment branch while testing.
-3. Let Render use `render.yaml`, or configure:
-   - Build: `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server build`
-   - Start: `pnpm --filter @workspace/api-server start`
-   - Health check: `/api/healthz`
-4. Add the secrets above.
-5. Verify `https://<render-host>/api/healthz`.
+Render runs the API; Enzonic does not run the API. The API uses the `DATABASE_URL` secret to connect to the Enzonic database. Use Enzonic's pooler host for the app's normal database traffic. Use the direct database host for migrations and long transactions. The first connection may take longer if the Enzonic branch is asleep. Check network access settings if Render cannot connect.
 
-Use the Enzonic **pooler** host for the API. Use the direct host for migrations and long-running transactions.
+After deployment, verify `https://<your-render-service>.onrender.com/api/healthz`. Then test database-backed room operations. Free Render services may sleep and take longer to answer the first request after inactivity.
 
-Do not automatically run `drizzle-kit push` in production.
+Do not automatically run `drizzle-kit push` against production. Review and apply production schema changes deliberately.
 
-## Configure GitHub Pages
+## 2. Configure and deploy the GitHub Pages frontend
 
-In the repository settings:
+1. In GitHub, open **Settings → Pages** and choose **GitHub Actions** as the publishing source.
+2. Open **Settings → Secrets and variables → Actions → Variables** and add these public frontend build variables:
+   - `VITE_API_BASE_URL`: the public Render API origin, e.g. `https://<your-render-service>.onrender.com` with no trailing slash.
+   - `VITE_CLERK_PUBLISHABLE_KEY`: the Clerk publishable key. This is public and is included in browser assets.
+   - `VITE_CLERK_PROXY_URL`: optional; set to `https://<your-render-service>.onrender.com/api/__clerk` only if you configure the Clerk proxy for that domain.
+3. Do not add `DATABASE_URL` or `CLERK_SECRET_KEY` to GitHub variables or secrets used by the frontend build.
+4. Push or merge the Pages workflow to `main`. It installs using `pnpm install --frozen-lockfile`, typechecks and builds the frontend, then deploys `artifacts/tabletop-rooms/dist/public`.
 
-1. Open **Settings → Pages**.
-2. Set the source to **GitHub Actions**.
-3. Open **Settings → Secrets and variables → Actions → Variables**.
-4. Add:
-   - `VITE_API_BASE_URL=https://<render-host>`
-   - `VITE_CLERK_PUBLISHABLE_KEY=<publishable key>`
-   - `VITE_CLERK_PROXY_URL=https://<render-host>/api/__clerk` if proxy authentication is configured.
+For this repository's default project Pages URL, the site is `https://kcode-15.github.io/Dungeonsmith/`, and the build base path is `/Dungeonsmith/`.
 
-`VITE_CLERK_PUBLISHABLE_KEY` is public and belongs in browser code. `CLERK_SECRET_KEY` must never be in GitHub Actions variables.
+## 3. Check cross-origin sessions and authentication
 
-Push or merge the deployment branch into `main`. The workflow deploys:
+The API uses HttpOnly player-session cookies. The default Pages origin and Render's `onrender.com` origin are different sites, so browser third-party-cookie restrictions may affect player sessions or Clerk authentication. The API must allow the exact frontend origin in `CORS_ORIGINS`, and browser API requests must include credentials.
 
-```text
-artifacts/tabletop-rooms/dist/public
-```
+For more reliable cookie behavior, use a custom frontend domain and an API hostname under the same registrable domain (for example, `play.example.com` and `api.example.com`). Configure those HTTPS origins in `CORS_ORIGINS`, GitHub Pages, Render, and Clerk as applicable. If using the default domains, test the full player join and sign-in flows in the browsers you intend to support.
 
-to:
+## 4. Verify the deployment
 
-```text
-https://kcode-15.github.io/Dungeonsmith/
-```
+Test the landing page, direct refresh of `/Dungeonsmith/room/<CODE>`, DM sign-in and dashboard, player room joins and cookies, map saves, chat, combat, and the API health endpoint.
 
-## Verify
+## 5. Node and lockfile
 
-Test:
-
-- Landing page
-- Room joins
-- DM sign-in and dashboard
-- Direct refresh of `/Dungeonsmith/room/<CODE>`
-- Player cookies
-- Map saves
-- Chat
-- Combat
-- Health endpoint
-
-For more reliable cross-origin player cookies and Clerk sessions, use a custom frontend domain plus an API subdomain. The GitHub Pages default domain and a separate Render domain are cross-site origins and may have browser third-party-cookie restrictions.
+The root `package.json` specifies pnpm `10.0.0` and Node `>=24`; Replit is configured for Node 24, and `pnpm-lock.yaml` uses lockfile format 9. The lockfile version alone does not establish a mismatch. The deployment workflow's `pnpm install --frozen-lockfile` verifies that the committed lockfile matches the workspace manifests. If it fails after dependency changes, regenerate and commit the lockfile with pnpm 10.0.0; do not edit the lockfile manually.
