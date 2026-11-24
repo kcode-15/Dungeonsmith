@@ -9,6 +9,91 @@ export interface HealthStatus {
   status: string;
 }
 
+export type VoiceParticipantKind = typeof VoiceParticipantKind[keyof typeof VoiceParticipantKind];
+
+
+export const VoiceParticipantKind = {
+  dm: 'dm',
+  player: 'player',
+} as const;
+
+export interface VoiceParticipant {
+  id: string;
+  displayName: string;
+  kind: VoiceParticipantKind;
+  joinedAt: string;
+}
+
+export interface VoiceSignalPayload {
+  /** @maxLength 24000 */
+  sdp?: string;
+  /** @maxLength 4096 */
+  candidate?: string;
+  /**
+     * @maxLength 256
+     * @nullable
+     */
+  sdpMid?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  sdpMLineIndex?: number | null;
+  /**
+     * @maxLength 256
+     * @nullable
+     */
+  usernameFragment?: string | null;
+}
+
+export type VoiceSignalType = typeof VoiceSignalType[keyof typeof VoiceSignalType];
+
+
+export const VoiceSignalType = {
+  offer: 'offer',
+  answer: 'answer',
+  'ice-candidate': 'ice-candidate',
+} as const;
+
+export interface VoiceSignal {
+  id: string;
+  fromParticipantId: string;
+  type: VoiceSignalType;
+  payload: VoiceSignalPayload;
+  createdAt: string;
+}
+
+export type VoiceSignalInputType = typeof VoiceSignalInputType[keyof typeof VoiceSignalInputType];
+
+
+export const VoiceSignalInputType = {
+  offer: 'offer',
+  answer: 'answer',
+  'ice-candidate': 'ice-candidate',
+} as const;
+
+export interface VoiceSignalInput {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  toParticipantId: string;
+  type: VoiceSignalInputType;
+  payload: VoiceSignalPayload;
+}
+
+export interface VoiceJoinResponse {
+  participantId: string;
+  participant: VoiceParticipant;
+  participants: VoiceParticipant[];
+}
+
+export interface VoiceRoomState {
+  participantId: string;
+  participants: VoiceParticipant[];
+  signals: VoiceSignal[];
+}
+
 export type Terrain = typeof Terrain[keyof typeof Terrain];
 
 

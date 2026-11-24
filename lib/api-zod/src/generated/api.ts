@@ -406,3 +406,145 @@ export const SendRoomMessageResponse = zod.object({
 })
 
 
+/**
+ * Creates temporary presence for a signed-in DM or a joined player. No audio is sent to the API.
+ * @summary Join a room's live voice chat
+ */
+export const JoinRoomVoiceParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const JoinRoomVoiceResponse = zod.object({
+  "participantId": zod.string(),
+  "participant": zod.object({
+  "id": zod.string(),
+  "displayName": zod.string(),
+  "kind": zod.enum(['dm', 'player']),
+  "joinedAt": zod.coerce.date()
+}),
+  "participants": zod.array(zod.object({
+  "id": zod.string(),
+  "displayName": zod.string(),
+  "kind": zod.enum(['dm', 'player']),
+  "joinedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Poll live voice presence and connection signals
+ */
+export const GetRoomVoiceStateParams = zod.object({
+  "code": zod.coerce.string(),
+  "participantId": zod.coerce.string()
+})
+
+export const getRoomVoiceStateResponseSignalsItemPayloadSdpMax = 24000;
+
+export const getRoomVoiceStateResponseSignalsItemPayloadCandidateMax = 4096;
+
+export const getRoomVoiceStateResponseSignalsItemPayloadSdpMidMax = 256;
+
+export const getRoomVoiceStateResponseSignalsItemPayloadSdpMLineIndexMin = 0;
+
+export const getRoomVoiceStateResponseSignalsItemPayloadUsernameFragmentMax = 256;
+
+
+
+export const GetRoomVoiceStateResponse = zod.object({
+  "participantId": zod.string(),
+  "participants": zod.array(zod.object({
+  "id": zod.string(),
+  "displayName": zod.string(),
+  "kind": zod.enum(['dm', 'player']),
+  "joinedAt": zod.coerce.date()
+})),
+  "signals": zod.array(zod.object({
+  "id": zod.string(),
+  "fromParticipantId": zod.string(),
+  "type": zod.enum(['offer', 'answer', 'ice-candidate']),
+  "payload": zod.object({
+  "sdp": zod.string().max(getRoomVoiceStateResponseSignalsItemPayloadSdpMax).optional(),
+  "candidate": zod.string().max(getRoomVoiceStateResponseSignalsItemPayloadCandidateMax).optional(),
+  "sdpMid": zod.string().max(getRoomVoiceStateResponseSignalsItemPayloadSdpMidMax).nullish(),
+  "sdpMLineIndex": zod.number().int().min(getRoomVoiceStateResponseSignalsItemPayloadSdpMLineIndexMin).nullish(),
+  "usernameFragment": zod.string().max(getRoomVoiceStateResponseSignalsItemPayloadUsernameFragmentMax).nullish()
+}),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * Accepts SDP or ICE signaling metadata only; audio media is never accepted.
+ * @summary Send temporary WebRTC connection details
+ */
+export const SendRoomVoiceSignalParams = zod.object({
+  "code": zod.coerce.string(),
+  "participantId": zod.coerce.string()
+})
+
+export const sendRoomVoiceSignalBodyToParticipantIdMax = 64;
+
+export const sendRoomVoiceSignalBodyPayloadSdpMax = 24000;
+
+export const sendRoomVoiceSignalBodyPayloadCandidateMax = 4096;
+
+export const sendRoomVoiceSignalBodyPayloadSdpMidMax = 256;
+
+export const sendRoomVoiceSignalBodyPayloadSdpMLineIndexMin = 0;
+
+export const sendRoomVoiceSignalBodyPayloadUsernameFragmentMax = 256;
+
+
+
+export const SendRoomVoiceSignalBody = zod.object({
+  "toParticipantId": zod.string().min(1).max(sendRoomVoiceSignalBodyToParticipantIdMax),
+  "type": zod.enum(['offer', 'answer', 'ice-candidate']),
+  "payload": zod.object({
+  "sdp": zod.string().max(sendRoomVoiceSignalBodyPayloadSdpMax).optional(),
+  "candidate": zod.string().max(sendRoomVoiceSignalBodyPayloadCandidateMax).optional(),
+  "sdpMid": zod.string().max(sendRoomVoiceSignalBodyPayloadSdpMidMax).nullish(),
+  "sdpMLineIndex": zod.number().int().min(sendRoomVoiceSignalBodyPayloadSdpMLineIndexMin).nullish(),
+  "usernameFragment": zod.string().max(sendRoomVoiceSignalBodyPayloadUsernameFragmentMax).nullish()
+})
+})
+
+export const sendRoomVoiceSignalResponsePayloadSdpMax = 24000;
+
+export const sendRoomVoiceSignalResponsePayloadCandidateMax = 4096;
+
+export const sendRoomVoiceSignalResponsePayloadSdpMidMax = 256;
+
+export const sendRoomVoiceSignalResponsePayloadSdpMLineIndexMin = 0;
+
+export const sendRoomVoiceSignalResponsePayloadUsernameFragmentMax = 256;
+
+
+
+export const SendRoomVoiceSignalResponse = zod.object({
+  "id": zod.string(),
+  "fromParticipantId": zod.string(),
+  "type": zod.enum(['offer', 'answer', 'ice-candidate']),
+  "payload": zod.object({
+  "sdp": zod.string().max(sendRoomVoiceSignalResponsePayloadSdpMax).optional(),
+  "candidate": zod.string().max(sendRoomVoiceSignalResponsePayloadCandidateMax).optional(),
+  "sdpMid": zod.string().max(sendRoomVoiceSignalResponsePayloadSdpMidMax).nullish(),
+  "sdpMLineIndex": zod.number().int().min(sendRoomVoiceSignalResponsePayloadSdpMLineIndexMin).nullish(),
+  "usernameFragment": zod.string().max(sendRoomVoiceSignalResponsePayloadUsernameFragmentMax).nullish()
+}),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Leave live voice chat
+ */
+export const LeaveRoomVoiceParams = zod.object({
+  "code": zod.coerce.string(),
+  "participantId": zod.coerce.string()
+})
+
+export const LeaveRoomVoiceResponse = zod.void()
+
+

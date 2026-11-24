@@ -35,7 +35,11 @@ import type {
   Player,
   RoomInput,
   RoomState,
-  RoomSummary
+  RoomSummary,
+  VoiceJoinResponse,
+  VoiceRoomState,
+  VoiceSignal,
+  VoiceSignalInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1238,5 +1242,330 @@ export const useSendRoomMessage = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getSendRoomMessageMutationOptions(options));
+    }
+
+export const getJoinRoomVoiceUrl = (code: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/voice/join`
+}
+
+/**
+ * Creates temporary presence for a signed-in DM or a joined player. No audio is sent to the API.
+ * @summary Join a room's live voice chat
+ */
+export const joinRoomVoice = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<VoiceJoinResponse> => {
+
+  return customFetch<VoiceJoinResponse>(getJoinRoomVoiceUrl(code),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getJoinRoomVoiceMutationKey = () => ['joinRoomVoice'] as const;
+
+export const getJoinRoomVoiceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinRoomVoice>>, TError,JoinRoomVoiceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof joinRoomVoice>>, TError,JoinRoomVoiceMutationVariables, TContext> => {
+
+const mutationKey = getJoinRoomVoiceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinRoomVoice>>, JoinRoomVoiceMutationVariables> = (props) => {
+          const {code} = props ?? {};
+
+          return  joinRoomVoice(code,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type JoinRoomVoiceMutationResult = NonNullable<Awaited<ReturnType<typeof joinRoomVoice>>>
+
+    export type JoinRoomVoiceMutationError = ErrorType<void>
+    export type JoinRoomVoiceMutationVariables = {code: string}
+
+    /**
+ * @summary Join a room's live voice chat
+ */
+export const useJoinRoomVoice = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof joinRoomVoice>>, TError,JoinRoomVoiceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof joinRoomVoice>>,
+        TError,
+        JoinRoomVoiceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getJoinRoomVoiceMutationOptions(options));
+    }
+
+export const getGetRoomVoiceStateUrl = (code: string,
+    participantId: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/voice/participants/${participantId}/state`
+}
+
+/**
+ * @summary Poll live voice presence and connection signals
+ */
+export const getRoomVoiceState = async (code: string,
+    participantId: string, options?: Parameters<typeof customFetch>[1]): Promise<VoiceRoomState> => {
+
+  return customFetch<VoiceRoomState>(getGetRoomVoiceStateUrl(code,participantId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoomVoiceStateQueryKey = (code: string,
+    participantId: string,) => {
+    return [
+    `/api/rooms/${code}/voice/participants/${participantId}/state`
+    ] as const;
+    }
+
+
+export const getGetRoomVoiceStateQueryOptions = <TData = Awaited<ReturnType<typeof getRoomVoiceState>>, TError = ErrorType<void>>(code: string,
+    participantId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomVoiceState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoomVoiceStateQueryKey(code,participantId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoomVoiceState>>> = ({ signal }) => getRoomVoiceState(code,participantId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined && participantId !== null && participantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoomVoiceState>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRoomVoiceStateQueryResult = NonNullable<Awaited<ReturnType<typeof getRoomVoiceState>>>
+export type GetRoomVoiceStateQueryError = ErrorType<void>
+
+
+/**
+ * @summary Poll live voice presence and connection signals
+ */
+
+export function useGetRoomVoiceState<TData = Awaited<ReturnType<typeof getRoomVoiceState>>, TError = ErrorType<void>>(
+ code: string,
+    participantId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomVoiceState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRoomVoiceStateQueryOptions(code,participantId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendRoomVoiceSignalUrl = (code: string,
+    participantId: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/voice/participants/${participantId}/signals`
+}
+
+/**
+ * Accepts SDP or ICE signaling metadata only; audio media is never accepted.
+ * @summary Send temporary WebRTC connection details
+ */
+export const sendRoomVoiceSignal = async (code: string,
+    participantId: string,
+    voiceSignalInput: VoiceSignalInput, options?: Parameters<typeof customFetch>[1]): Promise<VoiceSignal> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<VoiceSignal>(getSendRoomVoiceSignalUrl(code,participantId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(voiceSignalInput)
+  }
+);}
+
+
+
+
+
+export const getSendRoomVoiceSignalMutationKey = () => ['sendRoomVoiceSignal'] as const;
+
+export const getSendRoomVoiceSignalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendRoomVoiceSignal>>, TError,SendRoomVoiceSignalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendRoomVoiceSignal>>, TError,SendRoomVoiceSignalMutationVariables, TContext> => {
+
+const mutationKey = getSendRoomVoiceSignalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendRoomVoiceSignal>>, SendRoomVoiceSignalMutationVariables> = (props) => {
+          const {code,participantId,data} = props ?? {};
+
+          return  sendRoomVoiceSignal(code,participantId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendRoomVoiceSignalMutationResult = NonNullable<Awaited<ReturnType<typeof sendRoomVoiceSignal>>>
+    export type SendRoomVoiceSignalMutationBody = BodyType<VoiceSignalInput>
+    export type SendRoomVoiceSignalMutationError = ErrorType<void>
+    export type SendRoomVoiceSignalMutationVariables = {code: string;participantId: string;data: BodyType<VoiceSignalInput>}
+
+    /**
+ * @summary Send temporary WebRTC connection details
+ */
+export const useSendRoomVoiceSignal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendRoomVoiceSignal>>, TError,SendRoomVoiceSignalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendRoomVoiceSignal>>,
+        TError,
+        SendRoomVoiceSignalMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendRoomVoiceSignalMutationOptions(options));
+    }
+
+export const getLeaveRoomVoiceUrl = (code: string,
+    participantId: string,) => {
+
+
+
+
+  return `/api/rooms/${code}/voice/participants/${participantId}`
+}
+
+/**
+ * @summary Leave live voice chat
+ */
+export const leaveRoomVoice = async (code: string,
+    participantId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getLeaveRoomVoiceUrl(code,participantId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getLeaveRoomVoiceMutationKey = () => ['leaveRoomVoice'] as const;
+
+export const getLeaveRoomVoiceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveRoomVoice>>, TError,LeaveRoomVoiceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof leaveRoomVoice>>, TError,LeaveRoomVoiceMutationVariables, TContext> => {
+
+const mutationKey = getLeaveRoomVoiceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof leaveRoomVoice>>, LeaveRoomVoiceMutationVariables> = (props) => {
+          const {code,participantId} = props ?? {};
+
+          return  leaveRoomVoice(code,participantId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LeaveRoomVoiceMutationResult = NonNullable<Awaited<ReturnType<typeof leaveRoomVoice>>>
+
+    export type LeaveRoomVoiceMutationError = ErrorType<void>
+    export type LeaveRoomVoiceMutationVariables = {code: string;participantId: string}
+
+    /**
+ * @summary Leave live voice chat
+ */
+export const useLeaveRoomVoice = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveRoomVoice>>, TError,LeaveRoomVoiceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof leaveRoomVoice>>,
+        TError,
+        LeaveRoomVoiceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLeaveRoomVoiceMutationOptions(options));
     }
 

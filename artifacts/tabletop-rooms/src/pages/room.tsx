@@ -4,6 +4,7 @@ import { useUser } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, ChevronDown, Copy, Eye, MapPin, MessageCircle, Pencil, Send, Users, WandSparkles } from "lucide-react";
 import CombatPanel from "../components/CombatPanel";
+import RoomVoice from "../components/RoomVoice";
 import {
   getGetRoomCombatQueryKey,
   getGetRoomByCodeQueryKey,
@@ -158,6 +159,8 @@ function RoomPage() {
             {room.players.length ? <div className="player-list">{room.players.map((player, index) => <div className="player-row" key={player.id} data-testid={`player-${player.id}`}><div className={`avatar avatar-player avatar-tone-${index % 4}`}>{player.characterName.slice(0, 1).toUpperCase()}</div><div className="player-details"><strong>{player.characterName}</strong><span>Joined {new Date(player.joinedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span></div><i className="player-online" /></div>)}</div> : <div className="players-empty"><Users size={19} /><p>Your party is just around the corner.</p></div>}
             {!playerName && !isDm && <form className="room-join-inline" onSubmit={join}><label htmlFor="room-join-name">CLAIM YOUR SEAT</label><div><input id="room-join-name" value={joinName} onChange={(event) => setJoinName(event.target.value)} placeholder="Character name" maxLength={40} data-testid="input-room-join-name" /><button className="button button-primary button-icon-only" aria-label="Join the room" disabled={joinRoom.isPending} data-testid="button-join-from-room"><ChevronDown size={17} /></button></div>{joinError && <p className="form-error">{joinError}</p>}</form>}
           </section>
+
+          {(playerName || isDm) && <RoomVoice code={code} displayName={isDm ? "Dungeon Master" : playerName} kind={isDm ? "dm" : "player"} />}
 
           <CombatPanel code={code} players={room.players} playerName={playerName} isDm={isDm} />
 
