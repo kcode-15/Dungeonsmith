@@ -6,7 +6,6 @@ import {
   useLeaveRoomVoice,
   useSendRoomVoiceSignal,
   type VoiceParticipant,
-  type VoiceSignal,
   type VoiceSignalPayload,
 } from "@workspace/api-client-react";
 import { Mic, MicOff, Phone, PhoneOff, Radio, ShieldCheck, Volume2 } from "lucide-react";
@@ -75,15 +74,19 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
     return [...merged.values()].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt));
   }, [joinedParticipant, voiceState?.participants]);
 
-  const send = useCallback((toParticipantId: string, type: "offer" | "answer" | "ice-candidate", payload: VoiceSignalPayload) => {
+  const send = useCallback(async (
+    toParticipantId: string,
+    type: "offer" | "answer" | "ice-candidate",
+    payload: VoiceSignalPayload,
+  ): Promise<void> => {
     const fromId = participantIdRef.current;
-    if (!fromId || !toParticipantId) return Promise.resolve();
-    return sendSignal.mutateAsync({
+    if (!fromId || !toParticipantId) return;
+    await sendSignal.mutateAsync({
       code,
       participantId: fromId,
       data: { toParticipantId, type, payload },
     });
-  }, [code, sendSignal.mutateAsync]);
+  }, [code, sendSignal]);
 
   const disposeConnections = useCallback(() => {
     peersRef.current.forEach(({ pc }) => {
@@ -117,7 +120,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
     if (notify && id) {
       leaveVoice.mutate({ code, participantId: id });
     }
-  }, [code, disposeConnections, leaveVoice.mutate]);
+  }, [code, disposeConnections, leaveVoice]);
 
   const createPeer = useCallback((remoteId: string) => {
     const existing = peersRef.current.get(remoteId);
@@ -142,7 +145,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       if (!audio) {
         audio = document.createElement("audio");
         audio.autoplay = true;
-        audio.playsInline = true;
+        audio.setAttribute("playsinline", "");
         audio.setAttribute("aria-label", "Remote voice audio");
         audio.dataset.testid = `audio-voice-${remoteId}`;
         document.body.appendChild(audio);
@@ -178,7 +181,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       participantIdRef.current = "";
       if (id) leaveVoice.mutate({ code, participantId: id });
     };
-  }, [code, disposeConnections, leaveVoice.mutate]);
+  }, [code, disposeConnections, leaveVoice]);
 
   useEffect(() => {
     if (!localStream || !participantId || !voiceState) return;
@@ -229,11 +232,13 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       offeredToRef.current.add(person.id);
       const bundle = createPeer(person.id);
       void bundle.pc.createOffer()
-        .then((offer) => bundle.pc.setLocalDescription(offer).then(() => offer))
-        .then((offer) => offer.sdp ? send(person.id, "offer", { sdp: offer.sdp }) : undefined)
+        .then(async (offer) => {
+          await bundle.pc.setLocalDescription(offer);
+          if (offer.sdp) await send(person.id, "offer", { sdp: offer.sdp });
+        })
         .catch(() => setConnectionNote("Could not reach another player. Check your network and try again."));
     }
-  }, [createPeer, localStream, participantId, send, voiceState?.participants]);
+  }, [createPeer, localStream, participantId, send, voiceState]);
 
   const handleJoin = async () => {
     if (working) return;
@@ -295,17 +300,17 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
 
       {error && <div className="voice-alert" role="alert" data-testid="status-voice-error">{error}</div>}
       {connectionNote && <div className="voice-network-note" role="status" data-testid="status-voice-network">{connectionNote}</div>}
-      {voiceStateQuery.isError && connected && <div className="voice-alert" role="alert" data-testid="status-voice-signaling-error">The voice channel lost contact with the room. Check your network. <button type="button" onClick={() => void voiceStateQuery.refetch()} data-testid="button-retry-voice">Retry</button></div>}
+      {voiceStateQuery.isError && connected && <div className="voice-alert" role="alert" data-testid="status-voice-signaling-error">The voice channel lost contact with the room. Check your network and rejoin.</div>}
 
       {connected ? (
         <>
           <div className="voice-roster-heading"><span>IN THE CHANNEL</span><strong data-testid="text-voice-participant-count">{visibleParticipants.length}</strong></div>
-          <div className="voice-roster" data-testid="list-voice-participants">
+          <div class="voice-roster" data-testid="list-voice-participants">
             {visibleParticipants.length ? visibleParticipants.map((person, index) => (
               <div className="voice-person" key={person.id} data-testid={`voice-participant-${person.id}`}>
                 <span className={`voice-avatar voice-avatar-${index % 4}`}>{person.displayName.slice(0, 1).toUpperCase()}</span>
                 <span className="voice-person-name"><strong>{person.displayName}{person.id === participantId ? " (you)" : ""}</strong><small>{person.kind === "dm" ? "Dungeon Master" : "Player"}</small></span>
-                <span className={`voice-person-presence ${person.id === participantId ? (muted ? "is-muted" : "is-speaking-ready") : "is-connected"}`} title={person.id === participantId && muted ? "Microphone muted" : "Connected"} data-testid={`status-voice-person-${person.id}`}>
+                <span className={`voice-person-presence ${person.id === participantId ? (muted ? "is-muted" : "is-speaking-ready") : "is-connected"}`} title={person.id === participantId && muted ? "Muted" : "Connected"}>
                   {person.id === participantId && muted ? <MicOff size={13} /> : <Volume2 size={13} />}
                 </span>
               </div>
