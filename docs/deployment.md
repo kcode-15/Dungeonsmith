@@ -25,7 +25,7 @@ In the Render service's Environment settings, configure:
 - `DATABASE_URL`: paste the Enzonic PostgreSQL **pooler** connection URL into this server-side environment secret. Retain the required `sslmode=require` parameter. Do not commit the URL or paste it into chat.
 - `CLERK_SECRET_KEY`: Clerk's secret key, stored only as a Render secret.
 - `CLERK_PUBLISHABLE_KEY`: the matching publishable key, needed by the API's Clerk middleware.
-- `CORS_ORIGINS`: comma-separated, exact frontend origins, including scheme and hostname but no path. For example, `https://kcode-15.github.io`.
+- `CORS_ORIGINS`: comma-separated, exact frontend origins, including scheme and hostname but no path. For this deployment, use `https://kcode-15.github.io`.
 
 Render runs the API; Enzonic does not run the API. The API uses the `DATABASE_URL` secret to connect to the Enzonic database. Use Enzonic's pooler host for the app's normal database traffic. Use the direct database host for migrations and long transactions. The first connection may take longer if the Enzonic branch is asleep. Check network access settings if Render cannot connect.
 
@@ -37,13 +37,14 @@ Do not automatically run `drizzle-kit push` against production. Review and apply
 
 1. In GitHub, open **Settings → Pages** and choose **GitHub Actions** as the publishing source.
 2. Open **Settings → Secrets and variables → Actions → Variables** and add these public frontend build variables:
-   - `VITE_API_BASE_URL`: the public Render API origin, e.g. `https://<your-render-service>.onrender.com` with no trailing slash.
-   - `VITE_CLERK_PUBLISHABLE_KEY`: the Clerk publishable key. This is public and is included in browser assets.
-   - `VITE_CLERK_PROXY_URL`: optional; set to `https://<your-render-service>.onrender.com/api/__clerk` only if you configure the Clerk proxy for that domain.
+   - `VITE_API_BASE_URL`: `https://dungeonsmith.onrender.com` with no trailing slash.
+   - `VITE_CLERK_PUBLISHABLE_KEY`: the publishable key for the same Clerk application used by the Render API. It is public and included in browser assets. Its encoded Frontend API host must be a real Clerk domain, not a `github.io` host; the frontend build checks this and stops if it is invalid.
 3. Do not add `DATABASE_URL` or `CLERK_SECRET_KEY` to GitHub variables or secrets used by the frontend build.
 4. Push or merge the Pages workflow to `main`. It installs using `pnpm install --frozen-lockfile`, typechecks and builds the frontend, then deploys `artifacts/tabletop-rooms/dist/public`.
 
 For this repository's default project Pages URL, the site is `https://kcode-15.github.io/Dungeonsmith/`, and the build base path is `/Dungeonsmith/`.
+
+The app's sign-in and sign-up routes are `/Dungeonsmith/sign-in` and `/Dungeonsmith/sign-up`. If the Clerk application requires allowed frontend origins or redirect URLs, allow the origin `https://kcode-15.github.io` and use those paths under the repository Pages URL. Do not set a Clerk proxy URL for this app; the GitHub Pages build does not use a configured proxy.
 
 ## 3. Check cross-origin sessions and authentication
 

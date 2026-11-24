@@ -16,4 +16,4 @@ services:
       - key: CLERK_SECRET_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: https://kcode-15.github.io

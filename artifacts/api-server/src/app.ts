@@ -3,21 +3,22 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import cookieParser from "cookie-parser";
 import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
-import {
-  CLERK_PROXY_PATH,
-  clerkProxyMiddleware,
-  getClerkProxyHost,
-} from "./middlewares/clerkProxyMiddleware";
 
 const app: Express = express();
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY?.trim();
+
+if (!clerkPublishableKey) {
+  throw new Error(
+    "Missing CLERK_PUBLISHABLE_KEY for the API. Configure the key that matches CLERK_SECRET_KEY.",
+  );
+}
 
 const allowedOrigins = (process.env.CORS_ORIGINS ??
   (process.env.NODE_ENV === "production"
-    ? ""
+    ? "https://kcode-15.github.io"
     : "http://localhost:5173"))
   .split(",")
   .map((origin) => origin.trim())
@@ -58,19 +59,11 @@ app.use(
   }),
 );
 
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+app.use(clerkMiddleware(() => ({ publishableKey: clerkPublishableKey })));
 
 app.use("/api", router);
 

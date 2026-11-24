@@ -1,1 +1,2 @@
 - [Clerk SDK compatibility](clerk-sdk-compatibility.md) — keep Clerk React and shared packages on compatible major generations and satisfy the installed SDK's React peer range.
+- [Replit pnpm version mismatch](replit-pnpm-runtime.md) — use Corepack for the pinned pnpm in shell checks; disable auto-bootstrap when Replit's system CLI aborts.

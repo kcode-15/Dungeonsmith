@@ -14,6 +14,38 @@ if (!Number.isInteger(port) || port <= 0) {
 // Project Pages URL: https://kcode-15.github.io/Dungeonsmith/
 // Custom-domain Pages URL: /
 const basePath = process.env.BASE_PATH ?? '/';
+const clerkPublishableKey = process.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
+
+if (!clerkPublishableKey) {
+  throw new Error(
+    'Missing VITE_CLERK_PUBLISHABLE_KEY. Set it in GitHub Actions variables before building the frontend.',
+  );
+}
+
+const clerkKeyMatch = /^pk_(?:test|live)_([A-Za-z0-9_-]+={0,2})$/.exec(
+  clerkPublishableKey,
+);
+
+if (!clerkKeyMatch) {
+  throw new Error(
+    'VITE_CLERK_PUBLISHABLE_KEY must be a Clerk publishable key beginning with pk_test_ or pk_live_.',
+  );
+}
+
+const clerkFrontendApiHost = Buffer.from(clerkKeyMatch[1], 'base64url')
+  .toString('utf8')
+  .replace(/\$$/, '')
+  .toLowerCase();
+
+if (
+  !clerkFrontendApiHost ||
+  clerkFrontendApiHost === 'github.io' ||
+  clerkFrontendApiHost.endsWith('.github.io')
+) {
+  throw new Error(
+    'VITE_CLERK_PUBLISHABLE_KEY encodes a GitHub Pages host, which cannot serve Clerk. Set the key for the Clerk application’s actual Frontend API domain.',
+  );
+}
 
 export default defineConfig({
   base: basePath,
