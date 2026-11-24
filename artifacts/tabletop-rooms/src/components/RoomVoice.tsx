@@ -305,7 +305,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       {connected ? (
         <>
           <div className="voice-roster-heading"><span>IN THE CHANNEL</span><strong data-testid="text-voice-participant-count">{visibleParticipants.length}</strong></div>
-          <div class="voice-roster" data-testid="list-voice-participants">
+          <div className="voice-roster" data-testid="list-voice-participants">
             {visibleParticipants.length ? visibleParticipants.map((person, index) => (
               <div className="voice-person" key={person.id} data-testid={`voice-participant-${person.id}`}>
                 <span className={`voice-avatar voice-avatar-${index % 4}`}>{person.displayName.slice(0, 1).toUpperCase()}</span>
