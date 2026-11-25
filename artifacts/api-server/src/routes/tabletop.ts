@@ -239,7 +239,7 @@ router.post("/rooms/:code/join", async (req, res): Promise<void> => {
   res.cookie(roomCookieName(code), sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: 1000 * 60 * 60 * 24 * 60,
   });

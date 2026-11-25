@@ -26,6 +26,18 @@ type VoiceActor = {
   displayName: string;
 };
 
+function hasOnlyKeys(
+  value: unknown,
+  allowedKeys: readonly string[],
+): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).every((key) => allowedKeys.includes(key))
+  );
+}
+
 async function getRoomAndActor(req: Parameters<typeof getPlayerForRequest>[0], code: string) {
   const normalizedCode = code.toUpperCase();
   const room = await getRoom(normalizedCode);
@@ -132,10 +144,25 @@ router.post(
   async (req, res): Promise<void> => {
     const params = SendRoomVoiceSignalParams.safeParse(req.params);
     const body = SendRoomVoiceSignalBody.safeParse(req.body);
-    if (!params.success || !body.success) {
-      res.status(400).json({
-        error: !params.success ? params.error.message : body.error.message,
-      });
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    if (!body.success) {
+      res.status(400).json({ error: body.error.message });
+      return;
+    }
+    if (
+      !hasOnlyKeys(req.body, ["toParticipantId", "type", "payload"]) ||
+      !hasOnlyKeys(req.body.payload, [
+        "sdp",
+        "candidate",
+        "sdpMid",
+        "sdpMLineIndex",
+        "usernameFragment",
+      ])
+    ) {
+      res.status(400).json({ error: "Voice signaling accepts connection metadata only" });
       return;
     }
 

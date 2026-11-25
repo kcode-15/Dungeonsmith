@@ -114,10 +114,11 @@ export function getVoiceRoomState(
   now = Date.now(),
 ):
   | { status: "ok"; state: { participantId: string; participants: VoiceParticipant[]; signals: VoiceSignal[] } }
-  | { status: "not_found" | "forbidden" } {
+  | { status: "not_found" }
+  | { status: "forbidden" } {
   const room = removeExpiredSessions(roomId, now);
   const session = room?.get(participantId);
-  if (!session) return { status: "not_found" };
+  if (!room || !session) return { status: "not_found" };
   if (session.actorKey !== actorKey) return { status: "forbidden" };
 
   session.lastSeenAt = now;
@@ -139,10 +140,14 @@ export function queueVoiceSignal(
   now = Date.now(),
 ):
   | { status: "ok"; signal: VoiceSignal }
-  | { status: "not_found" | "forbidden" | "recipient_not_found" | "self_signal" | "queue_full" } {
+  | { status: "not_found" }
+  | { status: "forbidden" }
+  | { status: "recipient_not_found" }
+  | { status: "self_signal" }
+  | { status: "queue_full" } {
   const room = removeExpiredSessions(roomId, now);
   const sender = room?.get(participantId);
-  if (!sender) return { status: "not_found" };
+  if (!room || !sender) return { status: "not_found" };
   if (sender.actorKey !== actorKey) return { status: "forbidden" };
   if (input.toParticipantId === participantId) return { status: "self_signal" };
 

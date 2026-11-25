@@ -12,8 +12,6 @@ import { Mic, MicOff, Phone, PhoneOff, Radio, ShieldCheck, Volume2 } from "lucid
 
 type RoomVoiceProps = {
   code: string;
-  displayName: string;
-  kind: "dm" | "player";
 };
 
 type ConnectionBundle = {
@@ -38,17 +36,19 @@ function voiceErrorMessage(error: unknown) {
   return "Voice could not connect. Check your network and try again.";
 }
 
-function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
+function RoomVoice({ code }: RoomVoiceProps) {
   const [participantId, setParticipantId] = useState("");
   const [joinedParticipant, setJoinedParticipant] = useState<VoiceParticipant | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [muted, setMuted] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [connectionNote, setConnectionNote] = useState("");
   const peersRef = useRef(new Map<string, ConnectionBundle>());
   const audioRef = useRef(new Map<string, HTMLAudioElement>());
   const processedSignalsRef = useRef(new Set<string>());
+  const processingSignalsRef = useRef(new Set<string>());
   const offeredToRef = useRef(new Set<string>());
   const localStreamRef = useRef<MediaStream | null>(null);
   const participantIdRef = useRef("");
@@ -57,11 +57,15 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
   const joinVoice = useJoinRoomVoice();
   const sendSignal = useSendRoomVoiceSignal();
   const leaveVoice = useLeaveRoomVoice();
+  const sendSignalRef = useRef(sendSignal.mutateAsync);
+  const leaveVoiceRef = useRef(leaveVoice.mutate);
+  sendSignalRef.current = sendSignal.mutateAsync;
+  leaveVoiceRef.current = leaveVoice.mutate;
   const voiceStateQuery = useGetRoomVoiceState(code, participantId, {
     query: {
       enabled: Boolean(participantId),
       queryKey: getGetRoomVoiceStateQueryKey(code, participantId),
-      refetchInterval: 1000,
+      refetchInterval: 1200,
     },
   });
   const voiceState = voiceStateQuery.data;
@@ -81,12 +85,12 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
   ): Promise<void> => {
     const fromId = participantIdRef.current;
     if (!fromId || !toParticipantId) return;
-    await sendSignal.mutateAsync({
+    await sendSignalRef.current({
       code,
       participantId: fromId,
       data: { toParticipantId, type, payload },
     });
-  }, [code, sendSignal]);
+  }, [code]);
 
   const disposeConnections = useCallback(() => {
     peersRef.current.forEach(({ pc }) => {
@@ -104,9 +108,10 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
     audioRef.current.clear();
     offeredToRef.current.clear();
     processedSignalsRef.current.clear();
+    processingSignalsRef.current.clear();
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
-    setLocalStream(null);
+    if (mountedRef.current) setLocalStream(null);
   }, []);
 
   const leave = useCallback((notify = true) => {
@@ -116,20 +121,24 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
     setParticipantId("");
     setJoinedParticipant(null);
     setMuted(false);
+    setAudioBlocked(false);
     setConnectionNote("");
     if (notify && id) {
-      leaveVoice.mutate({ code, participantId: id });
+      leaveVoiceRef.current({ code, participantId: id });
     }
-  }, [code, disposeConnections, leaveVoice]);
+  }, [code, disposeConnections]);
 
   const createPeer = useCallback((remoteId: string) => {
     const existing = peersRef.current.get(remoteId);
     if (existing) return existing;
 
-    const pc = new RTCPeerConnection();
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+    });
     const bundle: ConnectionBundle = { pc, queuedCandidates: [] };
     peersRef.current.set(remoteId, bundle);
-    localStreamRef.current?.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current as MediaStream));
+    const stream = localStreamRef.current;
+    stream?.getTracks().forEach((track) => pc.addTrack(track, stream));
     pc.onicecandidate = (event) => {
       if (!event.candidate) return;
       const candidate = event.candidate.toJSON();
@@ -138,7 +147,11 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
         sdpMid: candidate.sdpMid,
         sdpMLineIndex: candidate.sdpMLineIndex,
         usernameFragment: candidate.usernameFragment,
-      }).catch(() => setConnectionNote("A voice connection is still negotiating. Check your network if it does not connect."));
+      }).catch(() => {
+        if (mountedRef.current) {
+          setConnectionNote("A voice connection is still negotiating. Check your network if it does not connect.");
+        }
+      });
     };
     pc.ontrack = (event) => {
       let audio = audioRef.current.get(remoteId);
@@ -152,13 +165,22 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
         audioRef.current.set(remoteId, audio);
       }
       audio.srcObject = event.streams[0] ?? new MediaStream([event.track]);
-      void audio.play().catch(() => setConnectionNote("Your browser paused incoming audio. Interact with the page to hear the table."));
+      void audio.play().then(() => {
+        if (mountedRef.current) setAudioBlocked(false);
+      }).catch(() => {
+        if (mountedRef.current) {
+          setAudioBlocked(true);
+          setConnectionNote("Your browser paused incoming audio. Interact with the page to hear the table.");
+        }
+      });
     };
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-        setConnectionNote("A player’s connection is interrupted. Their browser may reconnect automatically.");
+        if (mountedRef.current) {
+          setConnectionNote("A player’s connection is interrupted. Their browser may reconnect automatically.");
+        }
       } else if (pc.connectionState === "connected") {
-        setConnectionNote("");
+        if (mountedRef.current) setConnectionNote("");
       }
     };
     return bundle;
@@ -179,9 +201,30 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       const id = participantIdRef.current;
       disposeConnections();
       participantIdRef.current = "";
-      if (id) leaveVoice.mutate({ code, participantId: id });
+      if (id) leaveVoiceRef.current({ code, participantId: id });
     };
-  }, [code, disposeConnections, leaveVoice]);
+  }, [code, disposeConnections]);
+
+  useEffect(() => {
+    if (!participantId || !voiceState) return;
+    const activeIds = new Set(voiceState.participants.map((person) => person.id));
+    for (const [remoteId, bundle] of peersRef.current) {
+      if (activeIds.has(remoteId)) continue;
+      bundle.pc.onicecandidate = null;
+      bundle.pc.ontrack = null;
+      bundle.pc.onconnectionstatechange = null;
+      bundle.pc.close();
+      peersRef.current.delete(remoteId);
+      offeredToRef.current.delete(remoteId);
+      const audio = audioRef.current.get(remoteId);
+      if (audio) {
+        audio.pause();
+        audio.srcObject = null;
+        audio.remove();
+        audioRef.current.delete(remoteId);
+      }
+    }
+  }, [participantId, voiceState?.participants]);
 
   useEffect(() => {
     if (!localStream || !participantId || !voiceState) return;
@@ -190,8 +233,14 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
 
     const processSignals = async () => {
       for (const signal of incoming) {
-        if (cancelled || signal.fromParticipantId === participantId || processedSignalsRef.current.has(signal.id)) continue;
-        processedSignalsRef.current.add(signal.id);
+        if (
+          cancelled ||
+          signal.fromParticipantId === participantId ||
+          processedSignalsRef.current.has(signal.id) ||
+          processingSignalsRef.current.has(signal.id)
+        ) continue;
+        processingSignalsRef.current.add(signal.id);
+        let handled = false;
         try {
           const bundle = createPeer(signal.fromParticipantId);
           if (signal.type === "offer" && signal.payload.sdp) {
@@ -200,11 +249,13 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
             const answer = await bundle.pc.createAnswer();
             await bundle.pc.setLocalDescription(answer);
             if (answer.sdp) await send(signal.fromParticipantId, "answer", { sdp: answer.sdp });
+            handled = true;
           } else if (signal.type === "answer" && signal.payload.sdp) {
             if (!bundle.pc.currentRemoteDescription) {
               await bundle.pc.setRemoteDescription({ type: "answer", sdp: signal.payload.sdp });
               await flushCandidates(bundle);
             }
+            handled = true;
           } else if (signal.type === "ice-candidate" && signal.payload.candidate) {
             const candidate: RTCIceCandidateInit = {
               candidate: signal.payload.candidate,
@@ -214,9 +265,15 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
             };
             if (bundle.pc.remoteDescription) await bundle.pc.addIceCandidate(candidate);
             else bundle.queuedCandidates.push(candidate);
+            handled = true;
           }
         } catch {
-          setConnectionNote("A voice connection could not be established. Check your network and rejoin.");
+          if (mountedRef.current) {
+            setConnectionNote("A voice connection could not be established. Check your network and rejoin.");
+          }
+        } finally {
+          processingSignalsRef.current.delete(signal.id);
+          if (handled) processedSignalsRef.current.add(signal.id);
         }
       }
     };
@@ -236,7 +293,12 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
           await bundle.pc.setLocalDescription(offer);
           if (offer.sdp) await send(person.id, "offer", { sdp: offer.sdp });
         })
-        .catch(() => setConnectionNote("Could not reach another player. Check your network and try again."));
+        .catch(() => {
+          offeredToRef.current.delete(person.id);
+          if (mountedRef.current) {
+            setConnectionNote("Could not reach another player. Check your network and try again.");
+          }
+        });
     }
   }, [createPeer, localStream, participantId, send, voiceState]);
 
@@ -255,7 +317,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       const joined = await joinVoice.mutateAsync({ code });
       if (!mountedRef.current) {
         stream.getTracks().forEach((track) => track.stop());
-        leaveVoice.mutate({ code, participantId: joined.participantId });
+        leaveVoiceRef.current({ code, participantId: joined.participantId });
         return;
       }
       localStreamRef.current = stream;
@@ -265,7 +327,7 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
       setJoinedParticipant(joined.participant);
     } catch (joinError) {
       stream?.getTracks().forEach((track) => track.stop());
-      setError(voiceErrorMessage(joinError));
+      if (mountedRef.current) setError(voiceErrorMessage(joinError));
     } finally {
       if (mountedRef.current) setWorking(false);
     }
@@ -275,6 +337,19 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
     const nextMuted = !muted;
     localStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = !nextMuted; });
     setMuted(nextMuted);
+  };
+
+  const enableRemoteAudio = async () => {
+    const results = await Promise.all(
+      [...audioRef.current.values()].map((audio) =>
+        audio.play().then(() => true, () => false),
+      ),
+    );
+    const blocked = results.some((played) => !played);
+    if (mountedRef.current) {
+      setAudioBlocked(blocked);
+      if (!blocked) setConnectionNote("");
+    }
   };
 
   const connected = Boolean(participantId);
@@ -310,13 +385,14 @@ function RoomVoice({ code, displayName, kind }: RoomVoiceProps) {
               <div className="voice-person" key={person.id} data-testid={`voice-participant-${person.id}`}>
                 <span className={`voice-avatar voice-avatar-${index % 4}`}>{person.displayName.slice(0, 1).toUpperCase()}</span>
                 <span className="voice-person-name"><strong>{person.displayName}{person.id === participantId ? " (you)" : ""}</strong><small>{person.kind === "dm" ? "Dungeon Master" : "Player"}</small></span>
-                <span className={`voice-person-presence ${person.id === participantId ? (muted ? "is-muted" : "is-speaking-ready") : "is-connected"}`} title={person.id === participantId && muted ? "Muted" : "Connected"}>
+        <span className={`voice-person-presence ${person.id === participantId ? (muted ? "is-muted" : "is-speaking-ready") : "is-connected"}`} title={person.id === participantId && muted ? "Muted" : "Connected"} data-testid={`status-voice-person-${person.id}`}>
                   {person.id === participantId && muted ? <MicOff size={13} /> : <Volume2 size={13} />}
                 </span>
               </div>
             )) : <div className="voice-roster-loading" data-testid="status-voice-roster-loading"><span />Finding the rest of the party…</div>}
           </div>
           <div className="voice-controls">
+            {audioBlocked && <button type="button" className="voice-control voice-enable-audio" onClick={() => void enableRemoteAudio()} data-testid="button-enable-voice-audio"><Volume2 size={16} /> Enable audio</button>}
             <button type="button" className={`voice-control voice-mute-control ${muted ? "voice-control-muted" : ""}`} onClick={toggleMute} data-testid="button-voice-mute" aria-pressed={muted}>
               {muted ? <MicOff size={16} /> : <Mic size={16} />}{muted ? "Unmute" : "Mute"}
             </button>

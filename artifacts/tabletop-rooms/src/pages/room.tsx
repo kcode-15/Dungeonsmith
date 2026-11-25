@@ -160,7 +160,7 @@ function RoomPage() {
             {!playerName && !isDm && <form className="room-join-inline" onSubmit={join}><label htmlFor="room-join-name">CLAIM YOUR SEAT</label><div><input id="room-join-name" value={joinName} onChange={(event) => setJoinName(event.target.value)} placeholder="Character name" maxLength={40} data-testid="input-room-join-name" /><button className="button button-primary button-icon-only" aria-label="Join the room" disabled={joinRoom.isPending} data-testid="button-join-from-room"><ChevronDown size={17} /></button></div>{joinError && <p className="form-error">{joinError}</p>}</form>}
           </section>
 
-          {(playerName || isDm) && <RoomVoice code={code} displayName={isDm ? "Dungeon Master" : playerName} kind={isDm ? "dm" : "player"} />}
+          {(playerName || isDm) && <RoomVoice key={code} code={code} />}
 
           <CombatPanel code={code} players={room.players} playerName={playerName} isDm={isDm} />
 
