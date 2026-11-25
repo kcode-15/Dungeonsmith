@@ -15,14 +15,15 @@ function HomePage() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalizedCode = code.trim().toUpperCase();
-    if (!normalizedCode || !characterName.trim()) {
+    const normalizedName = characterName.trim();
+    if (!normalizedCode || !normalizedName) {
       setError("Add your room code and character name to join.");
       return;
     }
     setError("");
-    join.mutate({ code: normalizedCode, data: { characterName: characterName.trim() } }, {
+    join.mutate({ code: normalizedCode, data: { characterName: normalizedName } }, {
       onSuccess: () => {
-        localStorage.setItem(`tabletop-player-${normalizedCode}`, characterName.trim());
+        localStorage.setItem(`tabletop-player-${normalizedCode}`, normalizedName);
         setLocation(`/room/${normalizedCode}`);
       },
       onError: () => setError("We couldn't find that room. Check the code and try again."),
@@ -51,7 +52,31 @@ function HomePage() {
             <a href="#join" className="button button-primary" data-testid="link-join-adventure">Join an adventure <ArrowRight size={17} /></a>
             <Link href="/sign-up" className="button button-outline" data-testid="link-host-adventure">I'm the DM</Link>
           </div>
+          <div className="hero-proof"><span className="proof-dots"><i /><i /><i /><i /></span><span>Players join with a code. That's it.</span></div>
         </div>
+
+        <div className="hero-art" aria-label="A hand-drawn fantasy map laid out on a campaign table">
+          <div className="map-caption"><span>FIELD NOTES · 07</span><span>THE SUNKEN MARCH</span></div>
+          <div className="map-art">
+            <div className="map-river" />
+            <div className="map-hill hill-one" />
+            <div className="map-hill hill-two" />
+            <div className="map-hill hill-three" />
+            <div className="map-forest forest-one"><i /><i /><i /></div>
+            <div className="map-forest forest-two"><i /><i /></div>
+            <div className="map-ruin"><span /><span /><span /></div>
+            <div className="map-path" />
+            <div className="map-marker marker-a" />
+            <div className="map-marker marker-b" />
+            <div className="map-marker marker-c" />
+            <div className="map-location">ASHENFORD</div>
+            <div className="map-location location-two">THE OLD WATCH</div>
+            <div className="map-compass">N<br /><span /></div>
+          </div>
+          <div className="map-footer"><span>CAMPAIGN 01</span><span>24 × 16 HEXES</span><span>EST. 11:42 PM</span></div>
+          <div className="floating-note"><span className="note-dot" /> <span>3 adventurers at the table</span></div>
+        </div>
+        <div className="hero-index">01 <span>/ 04</span></div>
       </section>
 
       <section className="join-section" id="join">
@@ -71,6 +96,7 @@ function HomePage() {
             <button className="button button-primary join-submit" data-testid="button-join-room" disabled={join.isPending}>
               {join.isPending ? "Finding your table…" : "Enter the room"} <ArrowRight size={17} />
             </button>
+            <div className="join-form-foot"><span>NO PASSWORD</span><span>NO PLAYER ACCOUNT</span><span>JUST ADVENTURE</span></div>
           </form>
         </div>
       </section>
@@ -78,14 +104,14 @@ function HomePage() {
       <section className="features-section page-wrap">
         <div className="features-heading"><span className="section-kicker">LESS SETUP. MORE STORY.</span><h2>Keep the table<br /><em>in one place.</em></h2></div>
         <div className="feature-stack">
-          <article className="feature-row"><div className="feature-icon"><Map size={20} /></div><div><h3>Build a world as you go</h3><p>Paint terrain right onto the grid. Set the scene in a few strokes.</p></div></article>
-          <article className="feature-row"><div className="feature-icon"><MessageSquareText size={20} /></div><div><h3>Keep the chatter close</h3><p>Planning and plotting stay beside the shared map.</p></div></article>
-          <article className="feature-row"><div className="feature-icon"><Swords size={20} /></div><div><h3>Bring the whole party in</h3><p>Share a room code and start adventuring.</p></div></article>
+          <article className="feature-row"><div className="feature-icon"><Map size={20} /></div><div><h3>Build a world as you go</h3><p>Paint terrain right onto the grid. Forest paths, stone keeps, lava pits — set the scene in a few strokes.</p></div><span className="feature-number">01</span></article>
+          <article className="feature-row"><div className="feature-icon"><MessageSquareText size={20} /></div><div><h3>Keep the chatter close</h3><p>Planning, plotting, and the occasional terrible pun all live beside the map. The whole table stays in the loop.</p></div><span className="feature-number">02</span></article>
+          <article className="feature-row"><div className="feature-icon"><Swords size={20} /></div><div><h3>Bring the whole party in</h3><p>Share a short room code. Players choose a character name and see the same world, instantly.</p></div><span className="feature-number">03</span></article>
         </div>
       </section>
 
       <section className="closing-banner"><div className="page-wrap closing-inner"><BookOpen size={24} /><p>Every great D&amp;D campaign starts<br /><em>with a place to meet.</em></p><Link href="/sign-up" className="button button-light" data-testid="link-start-campaign">Start your campaign <ArrowRight size={16} /></Link></div></section>
-      <footer className="landing-footer page-wrap"><Link href="/" className="brand-lockup"><img src={logoUrl} alt="" className="brand-mark" /><span>Dungeon<span className="brand-light">smith</span></span></Link><span>Your online table for D&amp;D.</span></footer>
+      <footer className="landing-footer page-wrap"><Link href="/" className="brand-lockup"><img src={logoUrl} alt="" className="brand-mark" /><span>Dungeon<span className="brand-light">smith</span></span></Link><span>Your online table for D&amp;D.</span><span>NOT AFFILIATED WITH DND BEYOND, OR WIZARDS OF THE COAST</span></footer>
     </main>
   );
 }
