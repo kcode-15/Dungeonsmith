@@ -1,8 +1,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ClerkProvider, Show, SignIn, SignUp, useClerk } from "@clerk/react";
+import { ClerkProvider, Show, SignIn, SignUp, useAuth, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { Route, Switch, Redirect, useLocation, Router as WouterRouter } from "wouter";
+
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,7 +34,7 @@ const clerkAppearance = {
   cssLayerName: "clerk",
   options: {
     logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
+    logoLinkUrl: `${window.location.origin}${basePath || "/"}`,
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
@@ -75,6 +77,17 @@ const clerkAppearance = {
     main: "text-[#29313a]",
   },
 };
+
+function ClerkApiSession() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setAuthTokenGetter(() => getToken());
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
+
+  return null;
+}
 
 function HomeRedirect() {
   return (
@@ -146,35 +159,20 @@ function ClerkCacheSync() {
   useEffect(() => {
     const unsubscribe = addListener(({ user }) => {
       const id = user?.id ?? null;
-
-      if (
-        previousId.current !== undefined &&
-        previousId.current !== id
-      ) {
+      if (previousId.current !== undefined && previousId.current !== id) {
         client.clear();
       }
-
       previousId.current = id;
     });
-
     return unsubscribe;
   }, [addListener, client]);
 
   return null;
 }
 
-function RoutedErrorBoundary({
-  children,
-}: {
-  children: ReactNode;
-}) {
+function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-
-  return (
-    <ErrorBoundary resetKey={location}>
-      {children}
-    </ErrorBoundary>
-  );
+  return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
 
 function ClerkRoutes() {
@@ -201,10 +199,9 @@ function ClerkRoutes() {
         },
       }}
       routerPush={(to: string) => setLocation(stripBase(to))}
-      routerReplace={(to: string) =>
-        setLocation(stripBase(to), { replace: true })
-      }
+      routerReplace={(to: string) => setLocation(stripBase(to), { replace: true })}
     >
+      <ClerkApiSession />
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ClerkCacheSync />
@@ -213,12 +210,8 @@ function ClerkRoutes() {
               <Route path="/" component={HomeRedirect} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
-              <Route path="/dashboard">
-                <ProtectedDashboard />
-              </Route>
-              <Route path="/room/:code">
-                <RoomPage />
-              </Route>
+              <Route path="/dashboard"><ProtectedDashboard /></Route>
+              <Route path="/room/:code"><RoomPage /></Route>
               <Route component={NotFound} />
             </Switch>
           </RoutedErrorBoundary>
